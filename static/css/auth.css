@@ -1,0 +1,76 @@
+#container{
+		display: flex;
+		flex-direction: row;
+	}
+	#auth-nav {
+		width: 20%;
+		min-width: 120px;
+		display: flex;
+		flex-direction: column;
+	}
+	#auth-nav > a {
+		display: block;
+		padding-left: 23px;
+		line-height: 40px;
+		color: #000;
+		/*border-bottom: 2px solid #fff;*/
+	}
+	#auth-nav > a:hover {
+		padding-left: 20px;
+		background-color: #f7f7f7;
+		border-left: 3px solid #3371e3
+		/*border-bottom: 2px solid #ddd;*/
+		/*background-color: #fff;*/
+	}
+
+	#auth-content {
+		width: auto;
+		max-width: 80%;
+	}
+.well-list {
+	position: relative;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.user-edit  {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+.user-edit div {
+	display: flex;
+	width: 100%;
+	margin-bottom: 15px;
+}
+.control-label {
+	font-weight: 400;
+	width: 17%;
+	padding-top: 7px;
+}
+.grant-select {
+	background-color: #f3faff
+}
+legend {
+	display: block;
+	width: 100%;
+	padding: 0;
+	margin-bottom: 20px;
+	font-size: 21px;
+	line-height: inherit;
+	color: #2e2e2e;
+	border: 0;
+	border-bottom: 1px solid #e5e5e5;
+}
+.input {
+	display: block;
+	width: 80%;
+	height: 34px;
+	padding: 6px 16px;
+	font-size: 14px;
+	line-height: 1.42857143;
+	color: #2e2e2e;
+	background-color: #fff;
+	background-image: none;
+	border: 1px solid #e5e5e5;
+}

@@ -1,0 +1,101 @@
+{
+	"pidfile": "/var/run/8080.pid",
+	"workdir": "/data/web/golang/src/website",
+	"keys": {
+		"dbtype": "postgres",
+		"dbconfig": "host=localhost port=5432 user=website password=website dbname=website sslmode=disable",
+		"user-jwt-secret": "auth.secrets.jwt",
+		"server": "component.eudoreserver",
+		"logger": "component.logger"
+	},
+	"listeners": [
+		{
+			"addr": ":8080"
+		}
+	],
+	"component": {
+		"logger": {
+			"name": "logger",
+			"std": true,
+			"path": "/tmp/access.log",
+			"level": "debug",
+			"format": "json"
+		},
+		"eudoreserver": {
+			"name": "server-eudore",
+			"readtimeout": "12s",
+			"writetimeout": "4s"
+		}
+	},
+	"auth": {
+		"secrets": {
+			"captchakey": "PR6/Ds12aCiLcLk0ddX2fJ7aGeI",
+			"captchasalf": "6666",
+			"jwt": "secret"
+		},
+		"icontemp": "/tmp/website/icon/"
+	},
+	"mods": {
+		"linux": {
+			"component": {
+				"notify": {
+					"buildcmd": "go build -o /data/web/golang/src/website/server /data/web/golang/src/website/app.go",
+					"startcmd": "/data/web/golang/src/website/server --command=start",
+					"watchdir": "/data/web/golang/src/website/ /root/go/src/github.com/eudore/eudore/"
+				}
+			}
+		},
+		"docker": {
+			"description": "docker模式暂时不支持由系统模式加载，会加载当前系统模式，需要手动使用docker模式",
+			"command": "start",
+			"pidfile": "/var/run/website.pid",
+			"workdir": "/",
+			"keys": {
+				"dbconfig": "host=websitedb port=5432 user=website password=website dbname=website sslmode=disable"
+			},
+			"component": {
+				"logger": {
+					"name": "logger",
+					"std": true,
+					"path": " ",
+					"level": "info"
+				},
+				"notify": {
+					"disable": "true"
+				}
+			},
+			"listeners": [
+				{
+					"addr": ":80"
+				},
+				{
+					"addr": ":443",
+					"https": true,
+					"http2": true,
+					"keyfile": "",
+					"certfile": ""
+				}
+			]
+		},
+		"release": {
+			"command": "daemon",
+			"pidfile": "/var/run/website.pid",
+			"component": {
+				"logger": {
+					"name": "logger",
+					"std": true,
+					"path": "/tmp/website.log",
+					"level": "info"
+				},
+				"notify": {
+					"disable": "true"
+				}
+			},
+			"listeners": [
+				{
+					"addr": ":8080"
+				}
+			]
+		}
+	}
+}

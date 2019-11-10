@@ -3,10 +3,10 @@ package oauth2
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/eudore/eudore"
+	"net/http"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/gitlab"
-	"net/http"
 )
 
 type Oauth2GitlabHandle struct {
@@ -30,12 +30,12 @@ func (o *Oauth2GitlabHandle) Redirect(stats string) string {
 	return o.config.AuthCodeURL(stats)
 }
 
-func (o *Oauth2GitlabHandle) Callback(ctx eudore.Context) (map[string]interface{}, error) {
+func (o *Oauth2GitlabHandle) Callback(req *http.Request) (map[string]interface{}, string, error) {
 	// get code
-	code := ctx.GetQuery("code")
+	code := req.FormValue("code")
 	token, err := o.config.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		return nil, ErrOauthCode
+		return nil, "", ErrOauthCode
 	}
 	// get user info
 	response, err := http.Get("https://gitlab.com/api/v4/user?access_token=" + token.AccessToken)
@@ -43,9 +43,5 @@ func (o *Oauth2GitlabHandle) Callback(ctx eudore.Context) (map[string]interface{
 
 	var data = make(map[string]interface{})
 	err = json.NewDecoder(response.Body).Decode(&data)
-	return data, nil
-}
-
-func (o *Oauth2GitlabHandle) GetUserId(data map[string]interface{}) string {
-	return fmt.Sprint(data["id"])
+	return data, fmt.Sprint(int64(data["id"].(float64))), nil
 }

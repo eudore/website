@@ -8,7 +8,7 @@ import (
 func NewAddHeaderFunc() eudore.HandlerFunc {
 	return func(ctx eudore.Context) {
 		requestId := uuid.GetId()
-		ctx.Request().Header().Add(eudore.HeaderXRequestID, requestId)
+		ctx.Request().Header.Add(eudore.HeaderXRequestID, requestId)
 		// add default header
 		h := ctx.Response().Header()
 		h.Add(eudore.HeaderXRequestID, requestId)

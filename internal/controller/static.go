@@ -24,6 +24,8 @@ import (
 	// "github.com/kr/pretty"
 )
 
+const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
+
 type (
 	StaticHook       func(*ControllerStatic, HeadLabel)
 	ControllerStatic struct {
@@ -116,7 +118,7 @@ func (ctl *ControllerStatic) WriteHTML(path string) error {
 
 	// add header
 	h := ctl.Response().Header()
-	h.Set("Last-Modified", desc.ModTime().UTC().Format(eudore.TimeFormat))
+	h.Set("Last-Modified", desc.ModTime().UTC().Format(TimeFormat))
 
 	var br = bufio.NewReader(f)
 	var b bytes.Buffer
@@ -189,7 +191,7 @@ func (ctl *ControllerStatic) NewStaticHandlerFunc(perfix string) eudore.HandlerF
 
 			ctx.WriteString("\n</pre><hr></body>\n</html>")
 		} else if err.Error() == "readdirent: not a directory" {
-			eudore.HandlerFile(ctx, path)
+			ctx.WriteFile(path)
 		} else {
 			ctx.Fatal(err)
 		}
@@ -393,7 +395,7 @@ func (ctl *ControllerStatic) NewMergeFileHandlerFunc(parent string) eudore.Handl
 		}
 
 		h := ctx.Response().Header()
-		h.Set("Last-Modified", mf.modtime.UTC().Format(eudore.TimeFormat))
+		h.Set("Last-Modified", mf.modtime.UTC().Format(TimeFormat))
 		h.Set("Content-Type", mf.ext)
 		if h.Get("Content-Encoding") == "" {
 			h.Set("Content-Length", strconv.FormatInt(mf.length, 10))

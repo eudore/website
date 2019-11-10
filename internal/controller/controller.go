@@ -35,7 +35,7 @@ func (ctl *ControllerWebsite) Release() error {
 
 // Inject 方法实现控制器注入到路由器的方法,调用ControllerBaseInject方法注入。
 func (ctl *ControllerWebsite) Inject(controller eudore.Controller, router eudore.RouterMethod) error {
-	return eudore.ControllerBaseInject(controller, router)
+	return eudore.ControllerBaseInject(controller, router.SetParam("prefix", router.GetParam("route")))
 }
 
 // ControllerRoute 方法返回默认路由信息。
@@ -51,6 +51,9 @@ func (ctl *ControllerWebsite) GetRouteParam(pkg, name, method string) string {
 	}
 	if strings.HasSuffix(name, "Controller") {
 		name = name[:len(name)-len("Controller")]
+	}
+	if pkg == "task" {
+		return ""
 	}
 	return fmt.Sprintf("action=%s:%s:%s", pkg, name, method)
 }
@@ -167,6 +170,20 @@ func (ctl *ControllerWebsite) QueryJSONContext(ctx context.Context, query string
 		data[columns[i]] = value[i]
 	}
 	return data, rows.Close()
+}
+
+func (ctl *ControllerWebsite) QueryBind(data interface{}, query string, args ...interface{}) error {
+	return ctl.QueryBindContext(ctl.Context.Context(), data, query, args...)
+}
+func (ctl *ControllerWebsite) QueryBindContext(ctx context.Context, data interface{}, query string, args ...interface{}) error {
+	datas, err := ctl.QueryJSONContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	for k, v := range datas {
+		eudore.Set(data, k, v)
+	}
+	return nil
 }
 
 type pairs struct {

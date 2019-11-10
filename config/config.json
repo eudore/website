@@ -1,5 +1,5 @@
 {
-	"pidfile": "/var/run/8080.pid",
+	"pidfile": "/var/run/8082.pid",
 	"workdir": "/data/web/golang/src/website",
 	"keys": {
 		"dbtype": "postgres",
@@ -45,8 +45,29 @@
 				}
 			}
 		},
+		"windows": {
+			"command": "",
+			"pidfile": "",
+			"workdir": "D:/WorkSpaces/web/golang/src/website",
+			"keys": {
+				"dbconfig": "host=47.52.173.119 port=5432 user=jass password=TPG4ppk4rlncL3lO dbname=jass sslmode=disable"
+			},
+			"component": {
+				"notify": {
+					"buildcmd": "go build -o D:\\server.exe C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\website\\app.go",
+					"startcmd": "D:\\server.exe",
+					"watchdir": "C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\website\\ C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\eudore\\"
+				}
+			},
+			"component": {
+				"logger": {
+					"description": "路径使用空白字符串覆盖默认配置，使路径为空，仅输出到标准输出，",
+					"path": " "
+				}
+			}
+		},
 		"docker": {
-			"description": "docker模式暂时不支持由系统模式加载，会加载当前系统模式，需要手动使用docker模式",
+			"description": "docker模式使用/.dockerenv文件判断，不会使用runtime.GOOS mod",
 			"command": "start",
 			"pidfile": "/var/run/website.pid",
 			"workdir": "/",
@@ -57,8 +78,9 @@
 				"logger": {
 					"name": "logger",
 					"std": true,
-					"path": " ",
-					"level": "info"
+					"path": "/tmp/website.log",
+					"level": "debug",
+					"format": "json"
 				},
 				"notify": {
 					"disable": "true"
@@ -74,26 +96,6 @@
 					"http2": true,
 					"keyfile": "",
 					"certfile": ""
-				}
-			]
-		},
-		"release": {
-			"command": "daemon",
-			"pidfile": "/var/run/website.pid",
-			"component": {
-				"logger": {
-					"name": "logger",
-					"std": true,
-					"path": "/tmp/website.log",
-					"level": "info"
-				},
-				"notify": {
-					"disable": "true"
-				}
-			},
-			"listeners": [
-				{
-					"addr": ":8080"
 				}
 			]
 		}

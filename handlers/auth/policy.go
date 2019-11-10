@@ -54,11 +54,11 @@ func NewPolicyController(db *sql.DB, ram *middleware.Ram) *PolicyController {
 
 // Release 方法用于刷新ram策略信息。
 func (ctl *PolicyController) Release() error {
-	// 如果修改策略信息超过，则刷新ram策略信息。
+	// 如果修改策略信息成功，则刷新ram策略信息。
 	if ctl.Response().Status() == 200 && (ctl.Method() == "POST" || ctl.Method() == "PUT" || ctl.Method() == "DELETE") {
 		ctl.Ram.InitPolicyInfo(ctl.DB)
 	}
-	return nil
+	return ctl.ControllerWebsite.Release()
 }
 
 func (ctl *PolicyController) GetIndex() (interface{}, error) {

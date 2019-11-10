@@ -5,6 +5,7 @@ import (
 	"github.com/eudore/website/internal/controller"
 )
 
+// Init 函数定义status初始化内容。
 func Init(app *eudore.Eudore) error {
 	auth := app.Group("/auth")
 	auth.GetFunc("/login/wejass")

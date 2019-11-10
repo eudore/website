@@ -43,13 +43,17 @@ func NewUserInfoFunc(app *eudore.App) eudore.HandlerFunc {
 	if err != nil {
 		panic(err)
 	}
-	stmtQueryAccessKey, err := db.Prepare("SELECT userid,(SELECT name FROM tb_auth_user_info WHERE id = userid),accesssecrect FROM tb_auth_access_key WHERE accesskey=$1 and expires > $2")
 
-	jwtParse := jwt.NewVerifyHS256([]byte("secret"))
+	stmtQueryAccessKey, err := db.Prepare("SELECT userid,(SELECT name FROM tb_auth_user_info WHERE id = userid),accesssecrect FROM tb_auth_access_key WHERE accesskey=$1 and expires > $2")
+	if err != nil {
+		panic(err)
+	}
+
+	jwtParse := jwt.NewVerifyHS256([]byte(app.Get("auth.secrets.jwt").(string)))
 	return func(ctx eudore.Context) {
 		data, err := jwtParse.ParseBearer(ctx.GetHeader(eudore.HeaderAuthorization))
 		if err == nil {
-			ctx.SetParam("UID", eudore.GetString(data["userid"]))
+			ctx.SetParam("UID", eudore.GetDefaultString(data["userid"], fmt.Sprint(eudore.GetFloat64(data["userid"]))))
 			ctx.SetParam("UNAME", eudore.GetString(data["name"]))
 			return
 		}
@@ -75,7 +79,6 @@ func NewUserInfoFunc(app *eudore.App) eudore.HandlerFunc {
 				return
 			}
 			ttime := time.Unix(tunix, 0)
-			fmt.Println(time.Now().Add(50 * time.Minute).Unix())
 			if ttime.After(time.Now().Add(60 * time.Minute)) {
 				ctx.Errorf("accesskey expires is to long, max 60 min")
 				return
@@ -96,6 +99,19 @@ func NewUserInfoFunc(app *eudore.App) eudore.HandlerFunc {
 			}
 			ctx.SetParam("UID", userid)
 			ctx.SetParam("UNAME", username)
+		}
+
+		// websockt
+		if ctx.GetHeader("Upgrade") != "" {
+			bearer := ctx.GetQuery("bearer")
+			if bearer != "" {
+				data, err := jwtParse.ParseBearer(bearer)
+				if err == nil {
+					ctx.SetParam("UID", eudore.GetString(data["userid"]))
+					ctx.SetParam("UNAME", eudore.GetString(data["name"]))
+					return
+				}
+			}
 		}
 	}
 }

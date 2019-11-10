@@ -52,11 +52,11 @@ func NewPermissionController(db *sql.DB, ram *middleware.Ram) *PermissionControl
 
 // Release 方法用于刷新ram权限信息。
 func (ctl *PermissionController) Release() error {
-	// 如果修改权限信息超过，则刷新ram权限信息。
+	// 如果修改权限信息成功，则刷新ram权限信息。
 	if ctl.Response().Status() == 200 && (ctl.Method() == "POST" || ctl.Method() == "PUT" || ctl.Method() == "DELETE") {
 		ctl.Ram.InitPermissionInfo(ctl.DB)
 	}
-	return nil
+	return ctl.ControllerWebsite.Release()
 }
 
 func (ctl *PermissionController) GetIndex() (interface{}, error) {

@@ -1,11 +1,16 @@
 #!/bin/bash
 
 # cd to code
-appdir=$(go list -json github.com/eudore/website | grep Dir | cut -d\" -f4)
-if [ -d $appdir ] ; then    
-    cd $appdir
+go list -json github.com/eudore/website &> /dev/null
+if [ 0 -eq $? ] ; then
+    cd $(go list -json github.com/eudore/website | grep Dir | cut -d\" -f4)
 fi
 
+# get dit
+dir="$(pwd)"
+if [ -n "$1" ] ; then
+	dir=$1
+fi
 
 # init sql
 dbname="website"
@@ -14,7 +19,7 @@ dbuser="website"
 echo "\c $dbname;"
 
 > tmp.sql
-for i in `find . -type f | grep -E 'go$'`
+for i in `find $dir -type f | grep -E 'go$'`
 do
 	sed -n '/^PostgreSQL Begin/,/PostgreSQL End$/p' $i | grep -Ev '(^PostgreSQL Begin|PostgreSQL End$)' >> tmp.sql
 done

@@ -44,32 +44,7 @@ func NewRam(app *eudore.App) *Ram {
 }
 
 func (ram *Ram) NewRamFunc() eudore.HandlerFunc {
-	handler := eram.NewRamAny(
-		ram.Acl,
-		ram.Rbac,
-		ram.Pbac,
-		eram.DenyHander,
-	).RamHandle
-	return func(ctx eudore.Context) {
-		// 如果请求用户资源是用户本身的直接通过，UID、UNAME由用户信息中间件加载，userid、username由路由参数加载。
-		if ctx.GetParam("userid") == ctx.GetParam("UID") && ctx.GetParam("userid") != "" {
-			return
-		}
-		if ctx.GetParam("username") == ctx.GetParam("UNAME") && ctx.GetParam("username") != "" {
-			return
-		}
-
-		// 执行ram鉴权逻辑
-		action := ctx.GetParam("action")
-		if len(action) > 0 && !eram.HandleDefaultRam(eudore.GetInt(ctx.GetParam("UID")), action, ctx, handler) {
-			ctx.WriteHeader(403)
-			ctx.Render(map[string]interface{}{
-				eudore.ParamRAM:    ctx.GetParam("ram"),
-				eudore.ParamAction: action,
-			})
-			ctx.End()
-		}
-	}
+	return eram.NewMiddleware(ram.Acl, ram.Rbac, ram.Pbac)
 }
 
 func (ram *Ram) InitPermissionInfo(db *sql.DB) error {
@@ -196,7 +171,7 @@ func (ram *Ram) InitRoleBindPermission(db *sql.DB) error {
 }
 
 func (ram *Ram) InitUserBindPolicy(db *sql.DB) error {
-	rows, err := db.Query("SELECT userid,policyid FROM tb_auth_user_policy")
+	rows, err := db.Query("SELECT userid,policyid FROM tb_auth_user_policy ORDER BY index")
 	if err != nil {
 		return err
 	}

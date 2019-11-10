@@ -139,53 +139,35 @@ var _self = (typeof window !== 'undefined')
 		: {}   // if in node js
 	);
 
-_self.Base = JSON.parse('{"userid":0,"name":"","lang":"en-US","level":0,"menu":0,"bearer":""}')
-
+_self.Base = {"userid":0,"name":"","lang":"","bearer":""}
 
 if(window.localStorage){
 	var userinfo = JSON.parse(localStorage.getItem("user") || '{}')
 	if(new Date().getTime() < (userinfo.expires || 0) * 1000) {
 		_self.Base = userinfo
-		// _self.Base.bearer = localStorage.getItem("user")
-		console.log("load ")
 	}else {
 		localStorage.setItem("user", '{}')
 	}
-	if(typeof Base.lang === 'undefined') {
-		var lang = ""
-		if(document.querySelector('meta[name="language"]')){
-			lang = document.querySelector('meta[name="language"]').getAttribute('content')
-		}
-		for(var i of lang.split(',')) {
-			var pos = i.indexOf(';')
-			if(pos != -1) {
-				i = i.slice(0, pos)
-			}
-			if(i in langs) {
-				Base.lang = i
-				break
-			}
-		}
-	}
-	if(typeof Base.lang === 'undefined') {
-		Base.lang = "en-US"
-	}
-	// _self.Base = JSON.parse(localStorage.getItem("user"))
-	// _self.Base = JSON.parse('{"userid":1,"name":"root","lang":"en-US","level":0,"menu":255,"bearer":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVzIjoxNjY1NDAzMjAwLCJuYW1lIjoicm9vdCIsInVzZXJpZCI6IjEifQ.N7dACszdw1iScsTGYCv8EPrbFCqxcow0gvC_uKbidC0"}')
-	// _self.Base = JSON.parse('{"Name":"user01","Level":0,"menu":255,"Bearer":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjU0MDMyMDAsIm5hbWUiOiJ1c2VyMDEiLCJ1aWQiOiIzIn0.Ec7ECqsUxIZJvts46C0zVLiMzErqKzL7TUdMLQ0Qpk4"}')
 }
-
-//
-/*if(window.parent!=null) {
-	if(document.querySelector('meta[name="parent-id"]') == null) {
-		var pid = document.createElement('meta')
-		pid.name= "parent-id"
-		document.querySelector("head").appendChild(pid)
+if(typeof Base.lang === 'undefined' || Base.lang=="") {
+	var lang = ""
+	if(document.querySelector('meta[name="language"]')){
+		lang = document.querySelector('meta[name="language"]').getAttribute('content')
 	}
-	document.querySelector('meta[name="parent-id"]').setAttribute("content", window.parent.document.querySelector('meta[name="request-id"]').getAttribute('content'))
-}*/
-
-// 
+	for(var i of lang.split(',')) {
+		var pos = i.indexOf(';')
+		if(pos != -1) {
+			i = i.slice(0, pos)
+		}
+		if(i in langs) {
+			Base.lang = i
+			break
+		}
+	}
+}
+if(typeof Base.lang === 'undefined' || Base.lang=="") {
+	Base.lang = "en-US"
+}
 
 var requestid = ""
 if(document.querySelector('meta[name="request-id"]') != null) {
@@ -261,9 +243,8 @@ function parseJwt(token) {
 	return JSON.parse(window.atob(base64));
 };
 
-
 const Header = {
-	nav: ["auth", "note", "file", "status"],
+	nav: ["auth", "file", "note", "chat", "task", "status"],
 	view: function() {
 		return m('header.header', [
 			m("div.left", [
@@ -277,7 +258,7 @@ const Header = {
 					m("input", {type: "text", placeholder: "Search"})
 				),
 				m("div.header-user", 
-					Base.name == "" ? m("a", {href: "/auth/login/wejass?location=" + window.location.href}, "Log in") : [
+					Base.name == "" ? m("a", {href: "/auth/login/website?location=" + window.location.href}, "Log in") : [
 						m("img.avatar", {src: "/api/v1/auth/user/icon/name/" + Base.name, onclick: Base.showPage}),
 						m("ul.user-nav", [
 							m("li", Base.name),
@@ -292,8 +273,6 @@ const Header = {
 		])
 	}
 }
-
-
 
 const Content = {
 	view: function() {
@@ -359,6 +338,9 @@ const Side = {
 		return m("div#side-tool")
 	}
 }
+
+
+
 const Home = {
 	view: function(v) {
 		return [
@@ -373,3 +355,91 @@ const Home = {
 
 
 _self.Message = Message
+
+
+
+function Tables(dataurl, counturl) {
+	this.dataurl = dataurl || ""
+	this.counturl = counturl || ""
+	this.page = 0
+	this.size = 20
+	this.count = 0
+	this.head = []
+	this.data = []
+	this.pack = {}
+	this.line = []
+}
+
+Tables.prototype.redraw = function() {
+	var tb = this
+	if(tb.dataurl=="") {return}
+	m.request({
+		method: "GET", 
+		url: apiVersion + tb.dataurl,
+		data: {
+			page: this.page,
+			size: this.size
+		},
+	}).then(function(result){
+		tb.data = result
+	})
+
+	if(tb.counturl=="") {return}
+	m.request({
+		method: "GET",
+		url: apiVersion + tb.counturl,
+	}).then(function(result){
+		tb.count = result.count
+	})
+}
+Tables.prototype.setpack = function(name, fn) {
+	this.pack[name] = fn
+},
+Tables.prototype.view = function(vnode) {
+	return [
+		m("table", [
+			m("tr", vnode.state.head.map(function(i){
+				return m("th", i)
+			})),
+			vnode.state.data.map(function(i){
+				return m("tr", vnode.state.line.map(function(j){
+					return m("td", vnode.state.pack[j] ? vnode.state.pack[j](i[j]): i[j])
+				}))
+			})
+		]),
+		(vnode.state.count == 0) ? "" : m("div", m("ul", [
+			m("li", m("a", {onclick: function(){
+				if (vnode.state.page != 0) {
+					vnode.state.page--
+					vnode.state.redraw()
+
+				}
+			}},"Pre")),
+			m("li", m("a", {onclick: function(){
+				if(vnode.state.page != vnode.state.count) {
+					vnode.state.page++
+					vnode.state.redraw()
+				}
+			}},"Next"))
+		]))
+	]
+}
+
+function TableData(data) {
+	this.data = data
+	this.keys = []
+	this.vals = []
+	this.pack = {}
+}
+TableData.prototype.setpack = function(name, fn) {
+	this.pack[name] = fn
+}
+TableData.prototype.view = function(vnode) {
+	return m("table", m("tbody", vnode.state.vals.map(function(i, index) {
+		return m("tr", [
+			m("td", vnode.state.keys[index]),
+			m("td", vnode.state.pack[i] ? vnode.state.pack[i](vnode.state.data[i]) : vnode.state.data[i])
+		])
+	})))
+}
+

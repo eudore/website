@@ -115,16 +115,34 @@ footer li {
 
 
 
-#container {margin-right: auto;margin-left: auto;box-shadow: 0 2px 4px 0 rgba(0,0,0,.05);padding: 30px;padding-top: 60px;word-wrap: break-word;background-color: #fff;border: 1px solid #ddd;border-bottom-right-radius: 3px;border-bottom-left-radius: 3px;flex-wrap: wrap;align-content: space-between;}
-.box {display: -webkit-flex;display: flex;width: 100%;}
-.row,.column{flex-basis: 100%;display: flex;justify-content: flex-start;}
+#container {margin-right: auto;margin-left: auto;box-shadow: 0 2px 4px 0 rgba(0,0,0,.05);padding: 30px;padding-top: 60px;
+	word-wrap: break-word;background-color: #fff;border: 1px solid #ddd;border-bottom-right-radius: 3px;border-bottom-left-radius: 3px;
+	flex-wrap: wrap;align-content: space-between;
+	display: flex;
+	flex-direction: row;
+}
+/*.box {display: -webkit-flex;display: flex;width: 100%;}*/
+/*.row,.column{flex-basis: 100%;display: flex;justify-content: flex-start;}*/
+.row {
+	display: flex;
+	flex-direction: row;	
+}
+.column {
+	display: flex;
+	flex-direction: column;	
+}
 
 .btn{border: 1px solid #ccc;padding: .375rem .75rem;border-radius: .25rem;}
+
+.avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 100%;
+}
 
 fieldset {
     border: 0
 }
-
 
 
 

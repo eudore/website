@@ -1,13 +1,16 @@
 package auth
 
 import (
+	"crypto/md5"
 	"database/sql"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	// "github.com/eudore/eudore"
+	"github.com/eudore/eudore"
 	"github.com/eudore/website/internal/controller"
 	"github.com/eudore/website/internal/middleware"
 )
@@ -22,9 +25,10 @@ CREATE TABLE tb_auth_user_info(
 	"name" VARCHAR(32) NOT NULL,
 	"status" INTEGER DEFAULT 0,
 	"level" INTEGER DEFAULT 0,
-	"mail" VARCHAR(48),
-	"tel" VARCHAR(16),
+	"mail" VARCHAR(48) DEFAULT "",
+	"tel" VARCHAR(16) DEFAULT "",
 	"icon" INTEGER DEFAULT 0,
+	"lang" VARCHAR(16) DEFAULT "",
 	"loginip" INTEGER DEFAULT 0,
 	"logintime" TIMESTAMP,
 	"sigintime" TIMESTAMP DEFAULT (now())
@@ -34,7 +38,6 @@ COMMENT ON COLUMN "tb_auth_user_info"."icon" IS '图标ID，0使用gravatar';
 COMMENT ON COLUMN "tb_auth_user_info"."loginip" IS '登录IP';
 COMMENT ON COLUMN "tb_auth_user_info"."logintime" IS '上次登录时间';
 COMMENT ON COLUMN "tb_auth_user_info"."sigintime" IS '注册时间';
-
 
 -- 用户图标
 CREATE SEQUENCE seq_auth_user_icon_id INCREMENT by 1 MINVALUE 1 START 1;
@@ -105,6 +108,7 @@ type User struct {
 	Mail      string    `json:"mail"`
 	Tel       string    `json:"tel"`
 	Icon      int       `json:"icon"`
+	Lang      string    `json:"lang"`
 	Loginip   int64     `json:"loginip"`
 	Logintime time.Time `json:"logintime"`
 	Sigintime time.Time `json:"sigintime"`
@@ -115,7 +119,17 @@ type UserController struct {
 	Ram *middleware.Ram
 }
 
-func NewUserController(db *sql.DB, ram *middleware.Ram) *UserController {
+var iconTmp = "/tmp/wejass/icon/"
+
+func setIconTmp(path string) {
+	if path != "" {
+		iconTmp = path
+	}
+	os.MkdirAll(iconTmp, os.ModeDir)
+}
+
+func NewUserController(app *eudore.Eudore, db *sql.DB, ram *middleware.Ram) *UserController {
+	setIconTmp(app.GetString("auth.icontemp"))
 	return &UserController{
 		ControllerWebsite: controller.ControllerWebsite{
 			DB: db,
@@ -126,7 +140,7 @@ func NewUserController(db *sql.DB, ram *middleware.Ram) *UserController {
 
 // Release 方法刷新用户绑定ram资源信息。
 func (ctl *UserController) Release() error {
-	// 如果修改策略信息超过，则刷新ram策略信息。
+	// 如果修改策略信息成功，则刷新ram策略信息。
 	if ctl.Response().Status() == 200 && ctl.GetParam("bind") != "" {
 		switch ctl.GetParam("bind") {
 		case "permission":
@@ -137,7 +151,7 @@ func (ctl *UserController) Release() error {
 			ctl.Ram.InitUserBindPolicy(ctl.DB)
 		}
 	}
-	return nil
+	return ctl.ControllerWebsite.Release()
 }
 
 // GetRouteParam 方法额外添加bind路由参数信息，用于Release刷新ram。
@@ -192,7 +206,17 @@ func (ctl *UserController) DeleteIdById() (err error) {
 	return
 }
 
-func (ctl *UserController) PostInfoById()    {}
+func (ctl *UserController) PostInfoById() {}
+
+/*
+用户配置
+*/
+func (ctl *UserController) GetSetting() (interface{}, error) {
+	userid := ctl.GetParamInt("UID")
+	return ctl.QueryJSON("SELECT name,COALESCE(mail, '') AS mail,COALESCE(tel, '') AS tel,lang FROM tb_auth_user_info WHERE id=$1;", userid)
+
+}
+
 func (ctl *UserController) PostSettingById() {}
 
 /*
@@ -202,34 +226,58 @@ func (ctl *UserController) PostSettingById() {}
 func (ctl *UserController) GetIconIdById() {
 	ctl.WriteFile("static/favicon.ico")
 }
-func (ctl *UserController) GetIconNameByName() {
-	ctl.WriteFile("static/favicon.ico")
-	/*	path := iconTmp + user.Name
-		if PathExist(path) {
-			return nil
+func (ctl *UserController) GetIconNameByName() error {
+	// ctl.WriteFile("static/favicon.ico")
+	name := ctl.GetParam("name")
+	user, err := ctl.QueryJSON("SELECT icon,COALESCE(mail, '') AS mail FROM tb_auth_user_info WHERE name=$1;", name)
+	if err != nil {
+		return err
+	}
+
+	iconpath := iconTmp + name + ".png"
+	file, err := os.Open(iconpath)
+	if err != nil {
+		err = ctl.loadGravatar(iconpath, user["mail"].(string))
+		if err != nil {
+			return err
 		}
-			if user.Icon == 0 {
-				// get gravatar file
-				hash := md5.Sum([]byte(user.Mail))
-				resp, err := eudore.NewRequest("GET", fmt.Sprintf("https://www.gravatar.com/avatar/%x?s=%d&d=identicon", hash, 64), nil).Do()
-				if err != nil {
-					return err
-				}
+		file, _ = os.Open(iconpath)
+	}
 
-				newFile, err := os.Create(path)
-				if err != nil {
-					return err
-				}
-
-				defer newFile.Close()
-				defer resp.Close()
-				_, err = io.Copy(newFile, resp)
-				return err
-			} else {
-
-			}*/
+	ctl.SetHeader("Content-Type", "image/png")
+	io.Copy(ctl, file)
+	file.Close()
+	return nil
 }
-func (ctl *UserController) PostIconById() {}
+
+func (ctl *UserController) loadGravatar(path, mail string) error {
+	hash := md5.Sum([]byte(mail))
+	fmt.Printf("https://www.gravatar.com/avatar/%x?s=%d&d=identicon\n", hash, 64)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("https://www.gravatar.com/avatar/%x?s=%d&d=identicon", hash, 64), nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	link := resp.Header.Get("Link")
+	if link != "" {
+		ctl.SetHeader("Link", link)
+	}
+
+	newFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer newFile.Close()
+	_, err = io.Copy(newFile, resp.Body)
+	return err
+}
+
+func (ctl *UserController) PostIconById() {
+	fileheader := ctl.FormFile("file")
+	ctl.Debugf("%s %s %d", fileheader.Filename, fileheader.Header, fileheader.Size)
+}
 
 /*
 用户权限
@@ -307,7 +355,7 @@ func (ctl *UserController) PutBindRoleByUidById() (err error) {
 //
 // body: [{"id":4},{"id":6}]
 func (ctl *UserController) DeleteBindRoleById() error {
-	err := ctl.ExecBodyWithJSON(fmt.Sprintf("DELETE FROM tb_auth_user_role WHERE userid=%s AND roleid=$1", ctl.GetParamInt("id")), "id")
+	err := ctl.ExecBodyWithJSON(fmt.Sprintf("DELETE FROM tb_auth_user_role WHERE userid=%d AND roleid=$1", ctl.GetParamInt("id")), "id")
 	return err
 }
 
@@ -348,7 +396,7 @@ func (ctl *UserController) PutBindPolicyByUidById() (err error) {
 //
 // body: [{"id":4},{"id":6}]
 func (ctl *UserController) DeleteBindPolicyById() error {
-	err := ctl.ExecBodyWithJSON(fmt.Sprintf("DELETE FROM tb_auth_user_policy WHERE userid=%s AND policyid=$1", ctl.GetParamInt("id")), "id")
+	err := ctl.ExecBodyWithJSON(fmt.Sprintf("DELETE FROM tb_auth_user_policy WHERE userid=%d AND policyid=$1", ctl.GetParamInt("id")), "id")
 	return err
 }
 

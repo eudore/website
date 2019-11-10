@@ -7,7 +7,7 @@ function statusstr(status) {
 var User = {
 	// model
 	data: {id:0, level:0, name:"", mail:"",  loginip:0, logintime:0},
-	table: new Table("/user/index", "/user/count"),
+	table: new Tables("/user/index", "/user/count"),
 	bind: {
 		permission: [],
 		role: [],
@@ -451,7 +451,7 @@ var Permission = {
 	// model
 	list: [],
 	data: {id: 0, name: "",description: ""},
-	table: new Table("/permission/index", "/permission/count"),
+	table: new Tables("/permission/index", "/permission/count"),
 	// view
 	Index: {
 		oninit: function(vnode) {
@@ -574,7 +574,7 @@ var Permission = {
 
 var Role = {
 	data: {id: 0, name: "", description: ""},
-	table: new Table("/role/index"),
+	table: new Tables("/role/index"),
 	bind: {
 		user: [],
 		permission: [],
@@ -749,7 +749,7 @@ var Role = {
 
 var Policy = {
 	data: {id: 0, name: "", policy: "{}", description: "",time: 0},
-	table: new Table("/policy/index", "/policy/count"),
+	table: new Tables("/policy/index", "/policy/count"),
 	bind: [],
 	grant: [],
 	Index: {
@@ -982,144 +982,12 @@ var Policy = {
 	},
 }
 
-var Acl = {
-	Index: {
-		oninit: function(vnode) {
-			var tb = new Table("/acl/index")
-			tb.head = ["user", "permission", "effect", "description", "time"]
-			tb.line = ["user", "permission", "effect", "description", "time"]
-			tb.setpack("user", function(i) {
-				return m("a", {href: "#!/user/info/" + i}, i)
-			})
-			tb.setpack("permission", function(i) {
-				return m("a", {href: "#!/permission/info/" + i}, i)
-			})
-			tb.setpack("time", function(i) {
-				return new Date(i).Format("yyyy-MM-dd")
-			})
-			tb.setpack("effect", function(i) {
-				if(i){
-					return "允许"
-				}else {
-					return "拒绝"
-				}
-			})
-			tb.setpack("time", function(i) {
-				return new Date(i).Format("yyyy-MM-dd")
-			})
-			vnode.state.table = tb
-		},
-		view: function(vnode) {
-			return m("div", [
-				m("div", [
-					m("a", {href: "#!/acl/grant"},"grant"),
-					m("input")
-				]),
-				m(vnode.state.table)
-			])
-		}
-	},
-	Grant: {
-		view: function(){
-			return m("div")
-		}
-	}
-}
-var Rbac = {
-	view: function(vnode) {
-		return m("div", "未使用RBAC相关内容")
-	}
-}
-var Pbac = {
-	oninit: function(vnode) {
-		console.log("init", vnode)
-		vnode.state.table = new Table("/list/pbac")
-		vnode.state.table.head = ["user", "policy", "description", "index", "time"]
-		vnode.state.table.line = ["user", "policy", "description", "index", "time"]
-		vnode.state.table.setpack("time", function(i) {
-			return new Date(i).Format("yyyy-MM-dd")
-		})
-	},
-	view: function(vnode) {
-		return m("div", [
-			m("div"),
-			m(vnode.state.table)
-		])
-	}
-}
-function Table(dataurl, counturl) {
-	this.dataurl = dataurl || ""
-	this.counturl = counturl || ""
-	this.page = 0
-	this.size = 20
-	this.count = 0
-	this.head = []
-	this.data = []
-	this.pack = {}
-	this.line = []
-}
-
-Table.prototype.redraw = function() {
-	var tb = this
-	if(tb.dataurl=="") {return}
-	m.request({
-		method: "GET", 
-		url: apiVersion + tb.dataurl,
-		data: {
-			page: this.page,
-			size: this.size
-		},
-	}).then(function(result){
-		tb.data = result
-	})
-
-	if(tb.counturl=="") {return}
-	m.request({
-		method: "GET",
-		url: apiVersion + tb.counturl,
-	}).then(function(result){
-		tb.count = result.count
-	})
-}
-Table.prototype.setpack = function(name, fn) {
-	this.pack[name] = fn
-},
-Table.prototype.view = function(vnode) {
-	return [
-		m("table", [
-			m("tr", vnode.state.head.map(function(i){
-				return m("th", i)
-			})),
-			vnode.state.data.map(function(i){
-				return m("tr", vnode.state.line.map(function(j){
-					return m("td", vnode.state.pack[j] ? vnode.state.pack[j](i[j]): i[j])
-				}))
-			})
-		]),
-		(vnode.state.count == 0) ? "" : m("div", m("ul", [
-			m("li", m("a", {onclick: function(){
-				if (vnode.state.page != 0) {
-					vnode.state.page--
-					vnode.state.redraw()
-
-				}
-			}},"Pre")),
-			m("li", m("a", {onclick: function(){
-				if(vnode.state.page != vnode.state.count) {
-					vnode.state.page++
-					vnode.state.redraw()
-				}
-			}},"Next"))
-		]))
-	]
-}
-
-var Page = {
+var Nav = {
 	menu: ["user", "permission", "role", "policy"],
 	view: function() {
 		return [
 			m("nav#auth-nav.box",
-				Page.menu.map(function(i){
+				Nav.menu.map(function(i){
 					return m("a", {href: "#!/" + i}, i)
 				}
 			)),
@@ -1129,7 +997,7 @@ var Page = {
 }
 window.onload = function() {
 	m.mount(document.body, Home)
-	m.mount(document.getElementById('container'), Page)
+	m.mount(document.getElementById('container'), Nav)
 	m.route(document.getElementById('auth-content'), "/user", {
 		"/user": User.Index,
 		"/user/info/:name": User.Info,
@@ -1152,9 +1020,5 @@ window.onload = function() {
 		"/policy/info/:name": Policy.Info,
 		"/policy/edit/:name": Policy.Edit,
 		"/policy/grant/:name": Policy.Grant,
-		"/acl": Acl.Index,
-		"/acl/grant": Acl.Grant,
-		"/rbac": Rbac,
-		"/pbac": Pbac
 	})
 }

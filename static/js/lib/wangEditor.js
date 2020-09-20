@@ -563,7 +563,7 @@ $.offAll = function () {
 var config = {
 
 	// 默认菜单配置
-	menus: ['head', 'bold', 'italic', 'underline', 'strikeThrough', 'foreColor', 'backColor', 'link', 'list', 'justify', 'quote', 'image', 'table', 'video', 'code', 'undo', 'redo'],
+	menus: ['head', 'bold', 'italic', 'underline', 'strikeThrough', 'foreColor', 'backColor', 'link', 'list', 'justify', 'quote', 'image', 'table', 'video', 'openfile', 'code', 'undo', 'redo'],
 
 	colors: ['#000000', '#eeece0', '#1c487f', '#4d80bf', '#c24f4a', '#8baa4a', '#7b5ba1', '#46acc8', '#f9963b', '#ffffff'],
 
@@ -2745,6 +2745,39 @@ Image.prototype = {
 	}
 };
 
+
+/*
+	meni - openfile
+*/
+function Openfile(editor) {
+	this.editor = editor;
+	this.$elem = $(`<div class="w-e-menu">
+	<input type="file" id="w-e-menu-openfile" style='width:0.1px;height:0.1px;opacity:0;overflow:hidden;position:absolute;z-index:-1;' accept=".html,.txt,.md,.go,.sql,js,css"/>
+	<i><label class="w-e-icon-openfile" for="w-e-menu-openfile">
+		<svg class="icon"style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="511"><path d="M256 938.666667h512a85.333333 85.333333 0 0 0 85.333333-85.333334V170.666667a85.333333 85.333333 0 0 0-85.333333-85.333334h-305.92a85.333333 85.333333 0 0 0-60.586667 25.173334L195.84 316.16A85.333333 85.333333 0 0 0 170.666667 376.746667V853.333333a85.333333 85.333333 0 0 0 85.333333 85.333334z m213.333333-775.68V341.333333a42.666667 42.666667 0 0 1-42.666666 42.666667H248.32z" p-id="512"></path></svg>
+	</label><i/>
+</div>`);
+	var input=this.$elem.find("#w-e-menu-openfile");
+	input.on('change', () => {
+		var files = input[0].files;
+		if (files.length != 1) {return }
+		var reader = new FileReader();
+		reader.onload = (e) => {
+			if (files[0].name.endsWith(".html")) {
+				this.editor.txt.html(e.target.result);
+			} else {
+				this.editor.txt.html("<pre>" + e.target.result + "</pre>");
+			}
+			this.editor.customConfig.onchange(this.editor.txt.html())
+		};
+		reader.readAsText(files[0]);
+	});
+	this._active = false;
+}
+Openfile.prototype= {
+	constructor: Openfile,
+}
+
 /*
 	所有菜单的汇总
 */
@@ -2787,6 +2820,8 @@ MenuConstructors.table = Table;
 MenuConstructors.video = Video;
 
 MenuConstructors.image = Image;
+
+MenuConstructors.openfile = Openfile;
 
 /*
 	菜单集合

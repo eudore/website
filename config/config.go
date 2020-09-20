@@ -2,52 +2,75 @@ package config
 
 import (
 	"github.com/eudore/eudore"
-	// eudoreserver "github.com/eudore/eudore/component/server/eudore"
-
-	"github.com/eudore/website/handlers/auth"
+	"sync"
 )
 
 type (
 	// Config 定义website的全局配置。
 	Config struct {
-		Command   string                       `set:"command"`
-		Pidfile   string                       `set:"pidfile"`
-		Workdir   string                       `set:"workdir"`
-		Enable    []string                     `set:"enable"`
-		Mods      map[string]*Config           `set:"mods"`
-		Keys      map[string]interface{}       `set:"keys" description:"keys"`
-		Listeners []*eudore.ServerListenConfig `set:"listeners" json:"listeners"`
-		Component *ComponentConfig             `set:"component"`
+		sync.RWMutex
+		Command   string                      `json:"command" alias:"command"`
+		Pidfile   string                      `json:"pidfile" alias:"pidfile"`
+		Workdir   string                      `json:"workdir" alias:"workdir"`
+		Enable    []string                    `json:"enable" alias:"enable"`
+		Mods      map[string]*Config          `json:"mods" alias:"mods"`
+		Keys      map[string]interface{}      `json:"keys" alias:"keys"`
+		Listeners []eudore.ServerListenConfig `json:"listeners" alias:"listeners"`
+		Component *ComponentConfig            `json:"component" alias:"component"`
 
-		Auth *auth.Config `set:"auth"`
+		Auth *AuthConfig `json:"auth" alias:"auth"`
+		Note *NoteConfig `json:"note" alias:"note"`
+		Term *TermConfig `json:"term" alias:"term"`
 	}
 	// ComponentConfig 定义website使用的组件的配置。
 	ComponentConfig struct {
-		Logger *eudore.LoggerStdConfig `set:"logger"`
-		Server *eudore.ServerConfigStd `set:"server"`
-		// Eudoreserver eudoreserver.ServerConfig `set:"eudoreserver"`
-		Notify map[string]string `set:"notify"`
+		DB     DBConfig                `json:"db" alias:"db"`
+		Logger *eudore.LoggerStdConfig `json:"logger" alias:"logger"`
+		Server *eudore.ServerStdConfig `json:"server" alias:"server"`
+		Notify map[string]string       `json:"notify" alias:"notify"`
+		Pprof  *PprofConfig            `json:"pprof" alias:"pprof"`
+		Black  map[string]bool         `json:"black" alias:"black"`
+	}
+	DBConfig struct {
+		Driver string `json:"driver" alias:"driver"`
+		Config string `json:"config" alias:"config"`
+	}
+	PprofConfig struct {
+		Godoc     string            `json:"godoc" alias:"godoc"`
+		BasicAuth map[string]string `json:"basicauth" alias:"basicauth"`
+	}
+
+	AuthConfig struct {
+		Secrets  map[string]string `json:"secrets" alias:"secrets"`
+		IconTemp string            `json:"icontemp" alias:"icontemp"`
+		Sender   MailSenderConfig  `json:"sender" alias:"sender"`
+	}
+	MailSenderConfig struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Addr     string `json:"addr"`
+		Subject  string `json:"subject"`
+	}
+
+	NoteConfig struct {
+		Gitpath string `json:"gitpath" alias:"gitpath"`
+		Workdir string `json:"workdir" alias:"workdir"`
+	}
+
+	TermConfig struct {
+		Addr string `alias:"addr" json:"addr"`
 	}
 )
 
-var globalConfig *Config
-
-func init() {
-	globalConfig = &Config{
+func New() *Config {
+	return &Config{
 		Keys: map[string]interface{}{
 			// linux、win、docker下默认配置文件路径。
 			"config": []string{
-				"/root/go/src/github.com/eudore/website/config/config-eudore.json",
-				"/root/go/src/github.com/eudore/website/config/config.json",
-				"C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\website\\config\\config-eudore.json",
-				"C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\website\\config\\config.json",
-				"config.json",
+				"config/config-eudore.json", // 使用的配置
+				"config/config.json",        // 示范的配置
 			},
 		},
 	}
-}
 
-// GetConfig 获得全局单例配置。
-func GetConfig() *Config {
-	return globalConfig
 }

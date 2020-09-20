@@ -2,27 +2,23 @@
 	"pidfile": "/var/run/8082.pid",
 	"workdir": "/data/web/golang/src/website",
 	"keys": {
-		"dbtype": "postgres",
-		"dbconfig": "host=localhost port=5432 user=website password=website dbname=website sslmode=disable",
 		"user-jwt-secret": "auth.secrets.jwt",
-		"server": "component.eudoreserver",
-		"logger": "component.logger"
 	},
-	"listeners": [
-		{
-			"addr": ":8080"
-		}
-	],
+	"listeners": [{
+		"addr": ":8080"
+	}],
 	"component": {
+		"db": {
+			"driver": "postgres",
+			"config": "host=localhost port=5432 user=website password=website dbname=website sslmode=disable"
+		},
 		"logger": {
 			"name": "logger",
 			"std": true,
 			"path": "/tmp/access.log",
 			"level": "debug",
-			"format": "json"
 		},
-		"eudoreserver": {
-			"name": "server-eudore",
+		"server": {
 			"readtimeout": "12s",
 			"writetimeout": "4s"
 		}
@@ -49,17 +45,16 @@
 			"command": "",
 			"pidfile": "",
 			"workdir": "D:/WorkSpaces/web/golang/src/website",
-			"keys": {
-				"dbconfig": "host=47.52.173.119 port=5432 user=jass password=TPG4ppk4rlncL3lO dbname=jass sslmode=disable"
-			},
 			"component": {
+				"db": {
+					"driver": "postgres",
+					"config": "host=47.52.173.119 port=5432 user=jass password=TPG4ppk4rlncL3lO dbname=jass sslmode=disable"
+				},
 				"notify": {
 					"buildcmd": "go build -o D:\\server.exe C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\website\\app.go",
 					"startcmd": "D:\\server.exe",
 					"watchdir": "C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\website\\ C:\\Users\\Administrator\\go\\src\\github.com\\eudore\\eudore\\"
-				}
-			},
-			"component": {
+				},
 				"logger": {
 					"description": "路径使用空白字符串覆盖默认配置，使路径为空，仅输出到标准输出，",
 					"path": " "
@@ -71,10 +66,20 @@
 			"command": "start",
 			"pidfile": "/var/run/website.pid",
 			"workdir": "/",
-			"keys": {
-				"dbconfig": "host=websitedb port=5432 user=website password=website dbname=website sslmode=disable"
-			},
+			"listeners": [{
+				"addr": ":80"
+			}, {
+				"addr": ":443",
+				"https": true,
+				"http2": true,
+				"keyfile": "",
+				"certfile": ""
+			}],
 			"component": {
+				"db": {
+					"driver": "postgres",
+					"config": "host=websitedb port=5432 user=website password=website dbname=website sslmode=disable"
+				},
 				"logger": {
 					"name": "logger",
 					"std": true,
@@ -85,19 +90,7 @@
 				"notify": {
 					"disable": "true"
 				}
-			},
-			"listeners": [
-				{
-					"addr": ":80"
-				},
-				{
-					"addr": ":443",
-					"https": true,
-					"http2": true,
-					"keyfile": "",
-					"certfile": ""
-				}
-			]
+			}
 		}
 	}
 }

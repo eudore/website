@@ -1,3 +1,5 @@
+
+
 #slick-login {
 	width: 220px;
 	margin: auto; 
@@ -126,7 +128,7 @@
 .oauth2-other li {
 	float:left;
 	list-style:none; 
-	}
+}
 .oauth2-other svg{
 	width: 36px;
 	height: 36px;

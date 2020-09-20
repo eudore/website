@@ -1,32 +1,7 @@
 #container{
-		display: flex;
-		flex-direction: row;
-	}
-	#auth-nav {
-		width: 20%;
-		min-width: 120px;
-		display: flex;
-		flex-direction: column;
-	}
-	#auth-nav > a {
-		display: block;
-		padding-left: 23px;
-		line-height: 40px;
-		color: #000;
-		/*border-bottom: 2px solid #fff;*/
-	}
-	#auth-nav > a:hover {
-		padding-left: 20px;
-		background-color: #f7f7f7;
-		border-left: 3px solid #3371e3
-		/*border-bottom: 2px solid #ddd;*/
-		/*background-color: #fff;*/
-	}
-
-	#auth-content {
-		width: auto;
-		max-width: 80%;
-	}
+	display: flex;
+	flex-direction: row;
+}
 .well-list {
 	position: relative;
 	margin: 0;

@@ -1,22 +1,27 @@
 # Overview
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/eudore/website)](https://goreportcard.com/report/github.com/eudore/website)
-[![GoDoc](https://godoc.org/github.com/eudore/website?status.svg)](https://godoc.org/github.com/eudore/website)
-
 website目标是一个自用的多功能平台，作为[eudore框架](https://github.com/eudore/eudore)的damo项目，应用和框架相互促进，共同发展。
 
-[在线demo](https://www.eudore.cn/auth/),用户密码均为guest.
+[在线demo](https://www.eudore.cn),用户密码均为guest.
 
 # 功能
 
 待实现：
 
-- 体验 - seo优化
+- 功能 - seo优化
+- 功能 - 角色管理
+- 功能 - 堡垒机录像回放
+
+2020年9月20日更新：
+- **全面重构**
+- 功能 - 添加堡垒机功能，支持终端和阅览器双协议登录
+- 功能 - 堡垒机ssh协议登录允许使用证书
+- 功能 - 堡垒机录像存储
+- 功能 - 堡垒机使用sshd或agent进行控制
 - 管理 - 限流
 - 管理 - SingleFlight
 - 管理 - 黑名单
 - 功能 - gravatar支持
-- 功能 - 角色管理
 
 2019年11月10日完成:
 - 功能 - 第三方Oauth2对接
@@ -25,7 +30,6 @@ website目标是一个自用的多功能平台，作为[eudore框架](https://gi
 - 功能 - 优化输出访问日志格式
 - 鉴权 - PBAC策略支持browser
 - 开发 - 启用配置化
-- 开发 - 自动测试
 
 2019年9月29日完成：
 - 部署 - docker部署
@@ -37,7 +41,6 @@ website目标是一个自用的多功能平台，作为[eudore框架](https://gi
 - 管理 - 熔断器及后台
 - 体验 - Gzip启用
 - 体验 - 静态资源合并
-- 体验 - 静态资源自动push
 - 体验 - web前端I18n实现
 - 功能 - 静态文件服务
 - 功能 - 服务状态显示
